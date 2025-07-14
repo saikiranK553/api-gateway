@@ -1,0 +1,44 @@
+server:
+  port: 8082  # Gateway runs on this port
+
+spring:
+  application:
+    name: api-gateway
+
+#  cloud:
+#    gateway:
+#      discovery:
+#        locator:
+#          enabled: true
+#          lower-case-service-id: true  # Makes routing easier
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lower-case-service-id: true
+
+#      routes:
+#        - id: auth-service
+#          uri: lb://auth-service
+#          predicates:
+#            - Path=/api/auth/**
+#
+#        - id: profile-hub-service
+#          uri: lb://profile-hub-service
+#          predicates:
+#            - Path=/api/users/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka	
+
+
+jwt:
+ secret: ${JWT_SECRET:NqjaqhyjvNL4JFDhn76nHNOWPhRFudqDaZ/H6nev8kM=}
+# expiration:  900000
+#  refresh:
+#    expiration: 604800000
