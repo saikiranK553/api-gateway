@@ -76,7 +76,15 @@ public class GatewayConfig {
             
             // Profile service routes (JWT validation required)
             .route("profile-service", r -> r.path("/api/users/**")
-                .filters(f -> f.filter(jwtAuthFilter.apply(new JwtAuthenticationFilter.Config()))
+                .filters(f -> f
+                		.filter((exchange, chain) -> {
+                            System.out.println("Incoming request to profile-service:");
+                            System.out.println("Method: " + exchange.getRequest().getMethod());
+                            System.out.println("Path: " + exchange.getRequest().getURI().getPath());
+                            System.out.println("Headers: " + exchange.getRequest().getHeaders());
+                            return chain.filter(exchange);
+                        })
+                		.filter(jwtAuthFilter.apply(new JwtAuthenticationFilter.Config()))
                               .filter(responseErrorFilter.apply(new ResponseErrorFilter.Config()))
                               .filter(downstreamResponseFilter.apply(new DownstreamResponseFilter.Config())))
                 //.uri("lb://profile-service"))
