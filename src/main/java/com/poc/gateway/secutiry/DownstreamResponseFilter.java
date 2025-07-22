@@ -33,7 +33,6 @@ public class DownstreamResponseFilter extends AbstractGatewayFilterFactory<Downs
                     ServerHttpResponse response = exchange.getResponse();
                     HttpStatus statusCode = (HttpStatus) response.getStatusCode();
                     
-                    // Only process error responses
                     if (statusCode != null && statusCode.isError()) {
                         processErrorResponse(exchange, statusCode);
                     }
@@ -46,12 +45,10 @@ public class DownstreamResponseFilter extends AbstractGatewayFilterFactory<Downs
         ServerHttpResponse response = exchange.getResponse();
         String path = exchange.getRequest().getPath().value();
         
-        // If response is already processed, don't modify it
         if (response.isCommitted()) {
             return;
         }
         
-        // Create consistent error response
         ErrorResponse errorResponse = new ErrorResponse(
             statusCode.value(),
             statusCode.getReasonPhrase(),
@@ -67,7 +64,6 @@ public class DownstreamResponseFilter extends AbstractGatewayFilterFactory<Downs
             response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
             response.writeWith(Mono.just(buffer));
         } catch (Exception e) {
-            // Log the error but don't fail the request
             System.err.println("Error processing downstream response: " + e.getMessage());
         }
     }
@@ -94,6 +90,5 @@ public class DownstreamResponseFilter extends AbstractGatewayFilterFactory<Downs
     }
 
     public static class Config {
-        // Configuration properties if needed
     }
 }

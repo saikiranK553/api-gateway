@@ -21,105 +21,12 @@ import com.poc.gateway.utils.ReactiveJwtUtil;
 
 import reactor.core.publisher.Mono;
 
-//@Component
-//public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
-//
-//    @Autowired
-//    private ReactiveJwtUtil jwtUtil;
-//
-//    // List of paths that don't require authentication
-//    private static final List<String> OPEN_ENDPOINTS = Arrays.asList(
-//        "/auth/login",
-//        "/auth/register",
-//        "/auth/refresh",
-//        "/actuator/health"
-//    );
-//
-//    public JwtAuthenticationFilter() {
-//        super(Config.class);
-//    }
-//
-//    @Override
-//    public GatewayFilter apply(Config config) {
-//        return (exchange, chain) -> {
-//            ServerHttpRequest request = exchange.getRequest();
-//            String path = request.getPath().value();
-//            
-//            // Skip authentication for open endpoints
-//            if (isOpenEndpoint(path)) {
-//                return chain.filter(exchange);
-//            }
-//
-//            // Extract JWT token from Authorization header
-//            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-//            
-//            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//                return handleUnauthorized(exchange);
-//            }
-//
-//            String token = authHeader.substring(7); // Remove "Bearer " prefix
-//            
-//            // Validate token
-//            return jwtUtil.validateAccessToken(token)
-//                .flatMap(isValid -> {
-//                    if (isValid) {
-//                        // Add user info to request headers for downstream services
-//                        return addUserInfoToRequest(exchange, token)
-//                            .then(chain.filter(exchange));
-//                    } else {
-//                        return handleUnauthorized(exchange);
-//                    }
-//                })
-//                .onErrorResume(error -> handleUnauthorized(exchange));
-//        };
-//    }
-//
-//    private boolean isOpenEndpoint(String path) {
-//        return OPEN_ENDPOINTS.stream()
-//            .anyMatch(endpoint -> path.startsWith(endpoint));
-//    }
-//
-//    private Mono<Void> handleUnauthorized(ServerWebExchange exchange) {
-//        ServerHttpResponse response = exchange.getResponse();
-//        response.setStatusCode(HttpStatus.UNAUTHORIZED);
-//        return response.setComplete();
-//    }
-//
-//    private Mono<ServerWebExchange> addUserInfoToRequest(ServerWebExchange exchange, String token) {
-//        return Mono.zip(
-//            jwtUtil.extractEmail(token),
-//            jwtUtil.extractUserId(token),
-//            jwtUtil.extractRole(token)
-//        )
-//        .map(tuple -> {
-//            String email = tuple.getT1();
-//            String userId = tuple.getT2();
-//            String role = tuple.getT3();
-//            
-//            // Create new request with user info headers
-//            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-//                .header("X-User-Email", email)
-//                .header("X-User-Id", userId)
-//                .header("X-User-Role", role)
-//                .build();
-//            
-//            return exchange.mutate().request(mutatedRequest).build();
-//        })
-//        .onErrorReturn(exchange); // Return original exchange if extraction fails
-//    }
-//
-//    public static class Config {
-//        // Configuration properties if needed
-//    }
-//}
-
 @Component
 public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
 
     @Autowired
     private ReactiveJwtUtil jwtUtil;
 
-    // List of paths that don't require authentication
     private static final List<String> OPEN_ENDPOINTS = Arrays.asList(
         "/auth/login",
         "/auth/register",
@@ -137,25 +44,21 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getPath().value();
             
-            // Skip authentication for open endpoints
             if (isOpenEndpoint(path)) {
                 return chain.filter(exchange);
             }
 
-            // Extract JWT token from Authorization header
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return handleUnauthorized(exchange);
             }
 
-            String token = authHeader.substring(7); // Remove "Bearer " prefix
+            String token = authHeader.substring(7);
             
-            // Validate token
             return jwtUtil.validateAccessToken(token)
                 .flatMap(isValid -> {
                     if (isValid) {
-                        // Add user info to request headers for downstream services
                         return addUserInfoToRequest(exchange, token)
                             .then(chain.filter(exchange));
                     } else {
@@ -206,7 +109,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             String userId = tuple.getT2();
             String role = tuple.getT3();
             
-            // Create new request with user info headers
             ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Email", email)
                 .header("X-User-Id", userId)
@@ -215,10 +117,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             
             return exchange.mutate().request(mutatedRequest).build();
         })
-        .onErrorReturn(exchange); // Return original exchange if extraction fails
+        .onErrorReturn(exchange);
     }
 
     public static class Config {
-        // Configuration properties if needed
     }
 }

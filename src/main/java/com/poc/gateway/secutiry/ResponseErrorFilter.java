@@ -29,56 +29,22 @@ public class ResponseErrorFilter extends AbstractGatewayFilterFactory<ResponseEr
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             return chain.filter(exchange).doOnError(throwable -> {
-                // Handle errors from downstream services
                 handleDownstreamError(exchange, throwable);
             }).onErrorResume(throwable -> {
-                // Convert downstream service errors to consistent format
                 return handleDownstreamError(exchange, throwable);
             });
         };
     }
 
-//    private Mono<Void> handleDownstreamError(ServerWebExchange exchange, Throwable throwable) {
-//        ServerHttpResponse response = exchange.getResponse();
-//        String path = exchange.getRequest().getPath().value();
-//        
-//        // Check if this is a gateway timeout or connection error
-//        if (throwable instanceof org.springframework.web.server.ResponseStatusException) {
-//            org.springframework.web.server.ResponseStatusException ex = 
-//                (org.springframework.web.server.ResponseStatusException) throwable;
-//            
-//            return writeErrorResponse(response, ex.getStatusCode(), ex.getReason(), path);
-//        }
-//        
-//        // Handle connection refused or service unavailable
-//        if (throwable.getMessage() != null && 
-//            (throwable.getMessage().contains("Connection refused") || 
-//             throwable.getMessage().contains("Service unavailable"))) {
-//            return writeErrorResponse(response, HttpStatus.SERVICE_UNAVAILABLE, 
-//                "Service temporarily unavailable", path);
-//        }
-//        
-//        // Handle timeout errors
-//        if (throwable instanceof java.util.concurrent.TimeoutException) {
-//            return writeErrorResponse(response, HttpStatus.GATEWAY_TIMEOUT, 
-//                "Request timeout", path);
-//        }
-//        
-//        // Generic error
-//        return writeErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, 
-//            "Internal server error", path);
-//    }
     
     private Mono<Void> handleDownstreamError(ServerWebExchange exchange, Throwable throwable) {
         ServerHttpResponse response = exchange.getResponse();
         String path = exchange.getRequest().getPath().value();
         
-        // Check if this is a gateway timeout or connection error
         if (throwable instanceof org.springframework.web.server.ResponseStatusException) {
             org.springframework.web.server.ResponseStatusException ex = 
                 (org.springframework.web.server.ResponseStatusException) throwable;
             
-            // Convert HttpStatusCode to HttpStatus
             HttpStatus httpStatus = HttpStatus.resolve(ex.getStatusCode().value());
             if (httpStatus == null) {
                 httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -87,7 +53,6 @@ public class ResponseErrorFilter extends AbstractGatewayFilterFactory<ResponseEr
             return writeErrorResponse(response, httpStatus, ex.getReason(), path);
         }
         
-        // Handle connection refused or service unavailable
         if (throwable.getMessage() != null && 
             (throwable.getMessage().contains("Connection refused") || 
              throwable.getMessage().contains("Service unavailable"))) {
@@ -95,7 +60,6 @@ public class ResponseErrorFilter extends AbstractGatewayFilterFactory<ResponseEr
                 "Service temporarily unavailable", path);
         }
         
-        // Handle timeout errors
         if (throwable instanceof java.util.concurrent.TimeoutException) {
             return writeErrorResponse(response, HttpStatus.GATEWAY_TIMEOUT, 
                 "Request timeout", path);
@@ -123,7 +87,6 @@ public class ResponseErrorFilter extends AbstractGatewayFilterFactory<ResponseEr
             DataBuffer buffer = response.bufferFactory().wrap(jsonResponse.getBytes(StandardCharsets.UTF_8));
             return response.writeWith(Mono.just(buffer));
         } catch (Exception e) {
-            // Fallback
             String fallbackResponse = "{\"status\":" + status.value() + 
                 ",\"error\":\"" + status.getReasonPhrase() + 
                 "\",\"message\":\"" + message + 
@@ -134,6 +97,5 @@ public class ResponseErrorFilter extends AbstractGatewayFilterFactory<ResponseEr
     }
 
     public static class Config {
-        // Configuration properties if needed
     }
 }

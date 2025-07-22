@@ -27,20 +27,13 @@ public class ReactiveJwtUtil {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    /**
-     * Validates JWT token reactively
-     * @param token JWT token to validate
-     * @return Mono<Boolean> - true if valid, false otherwise
-     */
     public Mono<Boolean> validateToken(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<Boolean>() {
             @Override
             public Boolean call() {
                 try {
-                    // Parse and validate the token
                     extractAllClaims(token);
                     
-                    // Check if token is expired
                     return !isTokenExpiredSync(token);
                     
                 } catch (ExpiredJwtException | MalformedJwtException | UnsupportedJwtException | 
@@ -51,11 +44,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    /**
-     * Validates access token specifically (checks token type)
-     * @param token JWT token to validate
-     * @return Mono<Boolean> - true if valid access token, false otherwise
-     */
     public Mono<Boolean> validateAccessToken(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<Boolean>() {
             @Override
@@ -74,11 +62,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    /**
-     * Extracts email from token reactively
-     * @param token JWT token
-     * @return Mono<String> - email if valid, empty if invalid
-     */
     public Mono<String> extractEmail(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<String>() {
             @Override
@@ -92,11 +75,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    /**
-     * Extracts user ID from token reactively
-     * @param token JWT token
-     * @return Mono<String> - userId if valid, empty if invalid
-     */
     public Mono<String> extractUserId(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<String>() {
             @Override
@@ -110,11 +88,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    /**
-     * Extracts role from token reactively
-     * @param token JWT token
-     * @return Mono<String> - role if valid, empty if invalid
-     */
     public Mono<String> extractRole(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<String>() {
             @Override
@@ -128,11 +101,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    /**
-     * Checks if token is expired reactively
-     * @param token JWT token
-     * @return Mono<Boolean> - true if expired, false otherwise
-     */
     public Mono<Boolean> isTokenExpired(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<Boolean>() {
             @Override
@@ -141,17 +109,12 @@ public class ReactiveJwtUtil {
                     Date expiration = extractExpiration(token);
                     return expiration.before(new Date());
                 } catch (Exception e) {
-                    return true; // Consider invalid tokens as expired
+                    return true;
                 }
             }
         });
     }
 
-    /**
-     * Checks if token is near expiration (within 5 minutes)
-     * @param token JWT token
-     * @return Mono<Boolean> - true if near expiration, false otherwise
-     */
     public Mono<Boolean> isTokenNearExpiration(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<Boolean>() {
             @Override
@@ -160,21 +123,16 @@ public class ReactiveJwtUtil {
                     Date expiration = extractExpiration(token);
                     long currentTime = System.currentTimeMillis();
                     long expirationTime = expiration.getTime();
-                    long fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+                    long fiveMinutes = 5 * 60 * 1000;
                     
                     return (expirationTime - currentTime) <= fiveMinutes;
                 } catch (Exception e) {
-                    return true; // If we can't parse, assume it's near expiration
+                    return true;
                 }
             }
         });
     }
 
-    /**
-     * Gets remaining time to expiration in milliseconds
-     * @param token JWT token
-     * @return Mono<Long> - remaining time in milliseconds
-     */
     public Mono<Long> getTimeToExpiration(String token) {
         return Mono.fromCallable(new java.util.concurrent.Callable<Long>() {
             @Override
@@ -189,7 +147,6 @@ public class ReactiveJwtUtil {
         });
     }
 
-    // Private helper methods (non-reactive)
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
